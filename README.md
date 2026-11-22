@@ -63,7 +63,3 @@ Results and charts appear in `outputs/`. The PDF is at `report/technical_report.
 - `report/` — technical report and report generator
 - `run_project.py` — run the full analysis
 
-## Author
-
-Aditya Mishra  
-AI in Cyber Security Lab (ENSP355)
