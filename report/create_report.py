@@ -121,6 +121,7 @@ def fig(filename: str, maxw: float, caption: str):
 
 D = METRICS["data_description"]
 LR = METRICS["models"]["Logistic Regression"]
+DT = METRICS["models"]["Decision Tree"]
 MLP = METRICS["models"]["MLP Neural Network"]
 TH = {round(x["threshold"], 2): x for x in METRICS["thresholds"]}
 FAIR = {(r["training_condition"], r["group"]):r for r in METRICS["fairness"]}
@@ -144,11 +145,11 @@ add(section("1. Problem Statement and Project Scope"))
 add(p("Login systems receive both ordinary activity and potentially harmful authentication attempts. Fixed security rules can flag repeated failures or unusual locations, but the exact same pattern may appear when a genuine person travels, uses a new device or forgets a password. The challenge is therefore not simply to identify suspicious-looking events; it is to distinguish useful alerts from false alarms."))
 add(p("For this Unit I project, I implemented a small classification workflow that studies simulated login records and predicts whether each record should be marked <b>normal</b> or <b>suspicious</b>. The work is educational rather than a live threat-monitoring service: no private logs, accounts or actual network sessions were accessed."))
 add(sub("1.1 Objectives"))
-add(p("The prototype covers dataset creation, exploratory analysis, preprocessing, a Logistic Regression baseline, an MLP neural-network model, evaluation on an unseen test partition and two ethical experiments: alert-threshold sensitivity and deliberately biased training labels.", "dense"))
+add(p("The prototype covers dataset creation, exploratory analysis, preprocessing, Logistic Regression and Decision Tree classifiers, an MLP neural-network model, evaluation on an unseen test partition and two ethical experiments: alert-threshold sensitivity and deliberately biased training labels.", "dense"))
 add(sub("1.2 Overall workflow"))
 add(table(["INPUT", "PROCESS", "OUTPUT"], [
     ["4,000 simulated login events", "Clean, encode and standardize features", "Comparable model predictions"],
-    ["Training / test partition", "Train Logistic Regression and MLP", "Accuracy, precision, recall, F1, ROC AUC"],
+    ["Training / test partition", "Train Logistic Regression, Decision Tree and MLP", "Accuracy, precision, recall, F1, ROC AUC"],
     ["Model scores and clean labels", "Vary threshold and corrupt training labels", "False-alarm and fairness analysis"],
 ], [156, 166, WIDTH-322], compact=True))
 add(Spacer(1, 8))
@@ -158,7 +159,7 @@ new_page()
 # PAGE 2 - methods and class balance
 add(section("2. Data and Experimental Method"))
 add(sub("2.1 Repository and development environment"))
-add(p("The project contains a README, dependency file, version-control ignore rules, a <b>data/</b> folder, Python modules in <b>src/</b>, exported metrics and figures in <b>outputs/</b>, and this report. Python libraries include NumPy, pandas, scikit-learn and Matplotlib. The main entry point is <b>python run_project.py</b>; a separate smoke-test script verifies the basic setup.", "dense"))
+add(p("The project contains a README, dependency file, version-control ignore rules, a <b>data/</b> folder, Python modules in <b>src/</b>, a reproducible Jupyter notebook in <b>notebooks/</b>, exported metrics and figures in <b>outputs/</b>, and this report. Python libraries include NumPy, pandas, scikit-learn and Matplotlib. The main entry point is <b>python run_project.py</b>; a separate smoke-test script verifies the basic setup.", "dense"))
 add(sub("2.2 Data design"))
 add(p(f"I used a reproducible generator rather than downloading personal login information. It created <b>{D['total_events']:,} observations</b>, containing <b>{D['normal_events']:,} normal</b> events and <b>{D['suspicious_events']:,} suspicious</b> events. The {D['positive_rate']*100:.2f}% suspicious share is a choice of the simulation, not a real-world attack rate. The input columns describe access time, failed attempts, login velocity, IP-reputation score, geographic distance, a new-device indicator, MFA usage, weekend usage and login channel.", "dense"))
 add(fig("01_class_balance.png", 320,
@@ -178,20 +179,22 @@ add(fig("03_hourly_suspicious_rate.png", 360,
         "Figure 3. Suspicious-event percentage across the 24-hour simulated day."))
 new_page()
 
-# PAGE 4 - models, comparison, one figure, other figure
-add(section("4. ML Classification and Neural-Network Prototype"))
-add(p("I compared two supervised approaches with identical inputs and test cases. Logistic Regression (up to 1,500 iterations) served as the interpretable reference model. The neural-network prototype used scikit-learn's MLPClassifier with hidden layers of 32 and 16 neurons, ReLU activation and early stopping. Model training used random seed 42.", "dense"))
+# PAGE 4 - three-model comparison on exactly the same held-out test set
+add(section("4. Supervised ML and Neural-Network Comparison"))
+add(p("Three models were trained on the same 3,000 records and evaluated on the same 1,000 unseen records. Logistic Regression is a linear baseline (up to 1,500 iterations), the Decision Tree is depth-limited to six with at least ten samples per leaf, and the MLP uses 32 and 16 hidden neurons with ReLU and early stopping. All share the same training-only preprocessing pipeline and random seed 42.", "dense"))
 add(table(["MODEL", "ACCURACY", "PRECISION", "RECALL", "F1", "TRAIN"], [
     ["Logistic Regression", f"{LR['accuracy']:.3f}", f"{LR['precision']:.3f}", f"{LR['recall']:.3f}", f"{LR['f1']:.3f}", f"{LR['training_seconds']:.3f} s"],
+    ["Decision Tree", f"{DT['accuracy']:.3f}", f"{DT['precision']:.3f}", f"{DT['recall']:.3f}", f"{DT['f1']:.3f}", f"{DT['training_seconds']:.3f} s"],
     ["Neural Network (MLP)", f"{MLP['accuracy']:.3f}", f"{MLP['precision']:.3f}", f"{MLP['recall']:.3f}", f"{MLP['f1']:.3f}", f"{MLP['training_seconds']:.3f} s"],
 ], [151, 72, 76, 67, 50, WIDTH-416], compact=True))
-add(Spacer(1, 8))
-add(p(f"On the {D['test_events']:,}-event holdout, Logistic Regression achieved <b>{LR['accuracy']*100:.1f}% accuracy</b> and <b>{LR['f1']*100:.1f}% F1</b>, slightly above the MLP at <b>{MLP['accuracy']*100:.1f}% accuracy</b> and <b>{MLP['f1']*100:.1f}% F1</b>. Reported training seconds are machine-dependent measurements, not fixed algorithmic costs.", "dense"))
-add(fig("05_confusion_matrices.png", 410,
-        "Figure 4. Confusion matrices, threshold 0.50, using the same 1,000 test records."))
-add(p(f"The baseline incorrectly flagged <b>{LR['false_positive']}</b> legitimate events and missed <b>{LR['false_negative']}</b> suspicious events; the MLP produced <b>{MLP['false_positive']}</b> and <b>{MLP['false_negative']}</b>, respectively. The ROC AUC scores were {LR['roc_auc']:.3f} and {MLP['roc_auc']:.3f}.", "dense"))
-add(fig("04_roc_models.png", 205,
-        "Figure 5. ROC curves for the two independently trained detectors."))
+add(Spacer(1, 6))
+best_name, best_score = max((("Logistic Regression", LR["f1"]), ("Decision Tree", DT["f1"]), ("Neural Network", MLP["f1"])), key=lambda item:item[1])
+add(p(f"The highest suspicious-class F1 was obtained by <b>{best_name}</b> ({best_score:.3f}). The three accuracies were {LR['accuracy']*100:.1f}%, {DT['accuracy']*100:.1f}% and {MLP['accuracy']*100:.1f}%, respectively. These results reflect constructed features in synthetic data and should not be treated as operational detection rates.", "dense"))
+add(fig("05_confusion_matrices.png", 470,
+        "Figure 4. Confusion matrices for Logistic Regression, Decision Tree and MLP."))
+add(p(f"False alarms and missed threats were LR: {LR['false_positive']}/{LR['false_negative']}; tree: {DT['false_positive']}/{DT['false_negative']}; MLP: {MLP['false_positive']}/{MLP['false_negative']}. ROC AUC values were {LR['roc_auc']:.3f}, {DT['roc_auc']:.3f} and {MLP['roc_auc']:.3f}. Training times depend on the computer and environment.", "dense"))
+add(fig("04_roc_models.png", 210,
+        "Figure 5. ROC curves comparing all three classifiers on the held-out set."))
 new_page()
 
 # PAGE 5 - decision policy + ethics 1
@@ -219,7 +222,7 @@ add(table(["TRAINING DATA", "GROUP A FP RATE", "GROUP B FP RATE"], [
 add(Spacer(1, 10))
 add(fig("07_biased_labels_fpr.png", 408,
         "Figure 7. False-positive rates among benign events, with clean versus corrupted training labels."))
-add(p(f"With the corrupted labels, the false-positive rate for Group B rose from <b>{FAIR[('Original labels','Group B')]['false_positive_rate']*100:.1f}%</b> to <b>{FAIR[('Biased training labels','Group B')]['false_positive_rate']*100:.1f}%</b>. This illustrates how biased historical decisions can be learned and reinforced by a model. The fairness experiment intentionally includes the synthetic group identifier; it is separate from the two baseline-model evaluations above.", "dense"))
+add(p(f"With the corrupted labels, the false-positive rate for Group B rose from <b>{FAIR[('Original labels','Group B')]['false_positive_rate']*100:.1f}%</b> to <b>{FAIR[('Biased training labels','Group B')]['false_positive_rate']*100:.1f}%</b>. This illustrates how biased historical decisions can be learned and reinforced by a model. The fairness experiment intentionally includes the synthetic group identifier; it is separate from the three primary model evaluations above.", "dense"))
 add(sub("6.1 Privacy and interpretability"))
 add(p("Operational login records could contain location, device information, access times and account identifiers. Responsible systems should minimize collection, control access, limit retention and use logs only for an authorized security purpose. Linear-model coefficients can support investigations, but neither coefficients nor neural-network scores prove the reason for an individual event. Human oversight and a way to contest adverse decisions remain important.", "dense"))
 new_page()
@@ -227,17 +230,17 @@ new_page()
 # PAGE 7 - end matter
 add(section("7. Findings, Constraints and Future Work"))
 add(sub("7.1 Main findings"))
-add(p("The implemented pipeline demonstrates that basic machine learning can identify artificially generated suspicious-login patterns using a combination of authentication indicators. On this dataset, the simpler Logistic Regression was marginally stronger than the MLP, showing why model complexity should be justified by measured benefits rather than assumed superiority."))
+add(p("The implemented pipeline demonstrates that basic machine learning can identify artificially generated suspicious-login patterns using a combination of authentication indicators. Comparing Logistic Regression, Decision Tree and MLP on the same test data shows why model complexity should be justified by measurable performance and operational cost rather than assumed superiority."))
 add(p("Equally important, the threshold experiment shows a measurable operational conflict between false alarms and missed events, while the corrupted-label experiment shows that a model can absorb discriminatory patterns from its training history. A security system requires safeguards around labels, metrics and actions, not only a high score on a test set."))
 add(sub("7.2 Limits of the prototype"))
 add(p("The dataset is synthetic, feature patterns were created using knowledge of the simulated label and the test data come from the same generator as the training data. These conditions can produce optimistic performance. The experiment includes only one seeded train/test division and does not assess new attack families, changing real-world behavior, adversarial inputs, concept drift or live detection delays. The MLP is a small educational neural network, not a large deployment-grade deep-learning system.", "dense"))
 add(sub("7.3 Next steps"))
 add(p("A stronger follow-up study would validate on an appropriately authorized external security dataset, report confidence intervals across repeated splits, check calibration, compare class-weighted alternatives, test temporal drift and measure fairness across justified subgroups. A prototype should first operate in analyst-review mode rather than automatically blocking accounts.", "dense"))
 add(sub("7.4 Reproducibility and supplied outputs"))
-add(p("Create a Python virtual environment, install dependencies using <b>python -m pip install -r requirements.txt</b>, then run <b>python run_project.py</b>. The project writes seven figures, three analysis CSV files and <b>outputs/metrics.json</b>. Use <b>python report/create_report.py</b> to regenerate this PDF from the saved outputs. The repository is supplied for private GitHub upload; a live repository URL is not claimed here.", "dense"))
+add(p("Create a Python virtual environment, install dependencies using <b>python -m pip install -r requirements.txt</b>, then run <b>python run_project.py</b>. The project writes seven figures, three analysis CSV files and <b>outputs/metrics.json</b>. The <b>notebooks/Threat_Detection_Exploration.ipynb</b> notebook provides a separate step-by-step exploratory walkthrough. Use <b>python report/create_report.py</b> to regenerate this PDF from the saved outputs. The repository is supplied for private GitHub upload; a live repository URL is not claimed here.", "dense"))
 add(sub("References"))
 add(p("[1] AI in Cyber Security Lab, ENSP355, <i>Lab Assignment 01 - Unit 1</i>, course handout provided for this assessment.", "ref"))
-add(p("[2] scikit-learn documentation, <i>LogisticRegression</i>, <i>MLPClassifier</i>, and <i>Pipeline</i>. https://scikit-learn.org/stable/", "ref"))
+add(p("[2] scikit-learn documentation, <i>LogisticRegression</i>, <i>DecisionTreeClassifier</i>, <i>MLPClassifier</i>, and <i>Pipeline</i>. https://scikit-learn.org/stable/", "ref"))
 add(p("[3] National Institute of Standards and Technology, <i>AI Risk Management Framework (AI RMF 1.0)</i>, 2023. https://www.nist.gov/itl/ai-risk-management-framework", "ref"))
 add(p("[4] Dataset provenance: synthetic login-event generator in <b>src/generate_data.py</b> (seed 42); no third-party or personal event records were used.", "ref"))
 

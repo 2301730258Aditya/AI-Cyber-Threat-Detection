@@ -33,7 +33,20 @@
       "false_positive": 12,
       "false_negative": 18,
       "true_positive": 254,
-      "training_seconds": 0.014735500008100644,
+      "training_seconds": 0.026179083999977593,
+      "threshold": 0.5
+    },
+    "Decision Tree": {
+      "accuracy": 0.94,
+      "precision": 0.8925925925925926,
+      "recall": 0.8860294117647058,
+      "f1": 0.8892988929889298,
+      "roc_auc": 0.9703559308338721,
+      "true_negative": 699,
+      "false_positive": 29,
+      "false_negative": 31,
+      "true_positive": 241,
+      "training_seconds": 0.019929316000002473,
       "threshold": 0.5
     },
     "MLP Neural Network": {
@@ -46,7 +59,7 @@
       "false_positive": 14,
       "false_negative": 22,
       "true_positive": 250,
-      "training_seconds": 0.13174979999894276,
+      "training_seconds": 0.2200842830000056,
       "threshold": 0.5
     }
   },
@@ -61,7 +74,7 @@
       "false_positive": 21,
       "false_negative": 8,
       "true_positive": 264,
-      "training_seconds": 0.014735500008100644,
+      "training_seconds": 0.026179083999977593,
       "threshold": 0.3,
       "false_positive_rate": 0.028846153846153848
     },
@@ -75,7 +88,7 @@
       "false_positive": 12,
       "false_negative": 18,
       "true_positive": 254,
-      "training_seconds": 0.014735500008100644,
+      "training_seconds": 0.026179083999977593,
       "threshold": 0.5,
       "false_positive_rate": 0.016483516483516484
     },
@@ -89,7 +102,7 @@
       "false_positive": 6,
       "false_negative": 32,
       "true_positive": 240,
-      "training_seconds": 0.014735500008100644,
+      "training_seconds": 0.026179083999977593,
       "threshold": 0.7,
       "false_positive_rate": 0.008241758241758242
     }
@@ -150,6 +163,33 @@
         "precision": 0.9698764622728484,
         "recall": 0.97,
         "f1-score": 0.9698942732621708,
+        "support": 1000.0
+      }
+    },
+    "Decision Tree": {
+      "Normal": {
+        "precision": 0.9575342465753425,
+        "recall": 0.9601648351648352,
+        "f1-score": 0.9588477366255144,
+        "support": 728.0
+      },
+      "Suspicious": {
+        "precision": 0.8925925925925926,
+        "recall": 0.8860294117647058,
+        "f1-score": 0.8892988929889298,
+        "support": 272.0
+      },
+      "accuracy": 0.94,
+      "macro avg": {
+        "precision": 0.9250634195839675,
+        "recall": 0.9230971234647705,
+        "f1-score": 0.9240733148072221,
+        "support": 1000.0
+      },
+      "weighted avg": {
+        "precision": 0.9398701166920346,
+        "recall": 0.94,
+        "f1-score": 0.9399304511563633,
         "support": 1000.0
       }
     },

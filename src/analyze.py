@@ -1,4 +1,4 @@
-"""EDA, baseline ML, MLP prototype, and ethics experiments on synthetic login data."""
+"""EDA, Logistic Regression / Decision Tree / MLP models, and ethics experiments."""
 from __future__ import annotations
 import argparse
 import json
@@ -18,6 +18,7 @@ from sklearn.metrics import (accuracy_score, classification_report, confusion_ma
                              ConfusionMatrixDisplay, RocCurveDisplay)
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
@@ -140,6 +141,8 @@ def run(data_path: Path, output_path: Path, seed: int = 42) -> dict:
     y_test = test[TARGET].to_numpy()
     model_specs = {
         "Logistic Regression": LogisticRegression(max_iter=1500, random_state=seed),
+        "Decision Tree": DecisionTreeClassifier(max_depth=6, min_samples_leaf=10,
+                                                random_state=seed),
         "MLP Neural Network": MLPClassifier(hidden_layer_sizes=(32, 16), activation="relu",
                                             early_stopping=True, n_iter_no_change=15,
                                             max_iter=400, random_state=seed),
@@ -165,14 +168,14 @@ def run(data_path: Path, output_path: Path, seed: int = 42) -> dict:
     fig.tight_layout()
     save_figure(figures / "04_roc_models.png")
 
-    fig, axs = plt.subplots(1, 2, figsize=(10, 4.4))
+    fig, axs = plt.subplots(1, len(model_specs), figsize=(15, 4.6))
     for ax, name in zip(axs, model_specs):
         pred = (outputs[name]["probabilities"] >= .5).astype(int)
         ConfusionMatrixDisplay.from_predictions(y_test, pred, labels=[0, 1],
                                                  display_labels=["Normal", "Suspicious"],
                                                  cmap="Blues", colorbar=False, ax=ax)
         ax.set_title(name)
-    fig.suptitle("Held-out confusion matrices (threshold 0.50)", weight="bold")
+    fig.suptitle("Held-out confusion matrices: three models (threshold 0.50)", weight="bold")
     fig.tight_layout()
     save_figure(figures / "05_confusion_matrices.png")
 

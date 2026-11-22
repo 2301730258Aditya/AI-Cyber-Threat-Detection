@@ -1,149 +1,69 @@
-# AI-Driven Cyber Threat Awareness & Detection Prototype
+# AI Cyber Threat Detection
 
-**AI in Cyber Security Lab | ENSP355 | Unit 1 - Assignment 01**
+A Python mini-project that detects **suspicious login activity** using machine learning. It uses **4,000 simulated events**, not real customer data.
 
-A reproducible teaching prototype for spotting suspicious login events. It uses **fully synthetic** login activity, exploratory data analysis, Logistic Regression, a small MLP neural network, and controlled ethics experiments. This is **not** a production intrusion detection system.
+## Features
 
-## Quick start
+- Explore login patterns with charts
+- Train and compare Logistic Regression, Decision Tree, and MLP Neural Network
+- Check accuracy, precision, recall, F1-score, and ROC AUC
+- Investigate false alerts and simulated label bias
+- Explore a step-by-step Jupyter notebook
+- Export graphs, model results, and a PDF report
 
-Use Python **3.10+**. Open a terminal in the repository root.
+## Results (synthetic test data)
 
-```bash
-python -m venv .venv
-```
+| Model | Accuracy | F1-score |
+|---|---:|---:|
+| Logistic Regression | 97.0% | 94.4% |
+| Decision Tree | 94.0% | 88.9% |
+| MLP Neural Network | 96.4% | 93.3% |
 
-Activate it:
+These scores are from artificially generated data and **do not measure performance on real attacks**.
 
-- **Windows PowerShell:** `.\.venv\Scripts\Activate.ps1`
-- **Windows Command Prompt:** `.venv\Scripts\activate.bat`
-- **macOS / Linux:** `source .venv/bin/activate`
+## Tools
 
-Then:
+Python, Pandas, NumPy, Scikit-learn, Matplotlib, Jupyter, ReportLab.
 
-```bash
-python -m pip install -r requirements.txt
-python run_project.py
-```
+## How to run
 
-The output includes metrics in `outputs/`, seven PNG charts in `outputs/figures/`, and the included technical PDF is at `report/technical_report.pdf`. **The original, seven-page PDF contains results from the bundled seed-42 run; regenerate it if you change the data or model.**
+1. Open this repository folder in VS Code.
+2. Install dependencies:
 
-To independently regenerate the dataset and analyze it:
+   ```bash
+   python -m pip install -r requirements.txt
+   ```
 
-```bash
-python src/generate_data.py --rows 4000 --seed 42 --output data/synthetic_login_events.csv
-python src/analyze.py --data data/synthetic_login_events.csv --output outputs --seed 42
-```
+3. Run all experiments:
 
-Test the overall pipeline:
+   ```bash
+   python run_project.py
+   ```
 
-```bash
-python src/smoke_test.py
-```
+4. Create the PDF report:
 
-The seven-page report is personalized for **Aditya Mishra (Roll No. 2301730258)**. It uses a conventional academic style, original analysis from this project, and has no watermark, page numbers, or page footers. To regenerate it after rerunning your analysis:
+   ```bash
+   python report/create_report.py --name "Aditya Mishra" --roll "2301730258"
+   ```
 
-```bash
-python report/create_report.py
-```
+5. Optional: explore the notebook:
 
-**Windows font compatibility:** `create_report.py` automatically uses the built-in Times font when Linux's optional Liberation font files are unavailable. You do **not** need to download any fonts. If you received an older archive with `Cannot open file "/usr/share/fonts/..."`, use this updated script.
+   ```bash
+   jupyter notebook notebooks/Threat_Detection_Exploration.ipynb
+   ```
 
-`run_project.py` reuses the included CSV if present; to regenerate data deliberately, run `src/generate_data.py` explicitly.
+Results and charts appear in `outputs/`. The PDF is at `report/technical_report.pdf`.
 
-## Folder layout
+## Project folders
 
-```text
-ai-cybersecurity-unit1-mini-project-aditya/
-├── README.md
-├── .gitignore
-├── requirements.txt
-├── run_project.py
-├── data/
-│   └── synthetic_login_events.csv
-├── src/
-│   ├── __init__.py
-│   ├── generate_data.py
-│   ├── analyze.py
-│   └── smoke_test.py
-├── outputs/
-│   ├── metrics.json
-│   ├── model_comparison.csv
-│   ├── threshold_analysis.csv
-│   ├── fairness_analysis.csv
-│   └── figures/ (7 exported charts)
-└── report/
-    ├── create_report.py
-    └── technical_report.pdf
-```
+- `src/` — Python modules for dataset generation and analysis
+- `data/` — synthetic dataset
+- `notebooks/` — interactive EDA and model comparison
+- `outputs/` — exported charts and results
+- `report/` — technical report and report generator
+- `run_project.py` — run the full analysis
 
-## Tasks covered (from the assignment)
+## Author
 
-| Assignment task | Implementation |
-| --- | --- |
-| 1. Workspace, packages and validation | README, requirements, .gitignore, venv instructions, smoke test |
-| 2. Threat landscape EDA | Class balance, four feature distribution plots and hourly risk chart |
-| 3. Supervised ML | Missing-value imputation, one-hot encoding, scaling, Logistic Regression and holdout metrics |
-| 4. Deep learning prototype | `MLPClassifier` with two hidden layers; model comparison, ROC and confusion matrices |
-| 5. Ethical risks | Decision threshold vs FP/FN and intentionally corrupted Group B training labels |
-
-## Data dictionary and assumptions
-
-The entire CSV is generated by `src/generate_data.py` with a seeded pseudorandom generator; **no actual user logins, IP addresses or personal information were collected**. The class is generated as a hypothetical normal/suspicious event; several feature distributions depend on the class to create overlapping synthetic signals. Model scores therefore describe the simulator and do not generalize to real environments.
-
-| Field | Interpretation |
-| --- | --- |
-| `event_id` | Arbitrary event identifier, excluded from modeling |
-| `hour` | Login time (0-23) |
-| `failed_attempts` | Recent unsuccessful authentication attempts |
-| `login_velocity_10m` | Number of login attempts in a 10-minute window |
-| `ip_reputation_score` | Simulated 0-100 score; **larger = safer** |
-| `geo_distance_km` | Simulated distance from usual location in kilometres |
-| `new_device` | 1 = previously unseen device |
-| `mfa_used` | 1 = multi-factor authentication was used |
-| `is_weekend` | 1 = weekend |
-| `login_channel` | Simulated web / mobile / vpn channel; some missing values |
-| `user_group` | Arbitrary synthetic A/B cohort (used ONLY in ethics experiments) |
-| `is_suspicious` | Generated ground truth: 1 = suspicious, 0 = normal |
-
-Missing values are deliberately inserted in IP reputation, geo distance and channel. The pipeline fits imputation, scaling and one-hot encoding **only on training data** to avoid train/test leakage. A stratified 75/25 train/test split (seed 42) is shared by both primary models. `user_group` and `event_id` are excluded from the primary detectors. The MLP is a basic neural network prototype **using scikit-learn** (allowed by the assignment), not a production-scale deep learning architecture.
-
-## Ethics demonstration
-
-1. The first experiment tries decision thresholds 0.30, 0.50 and 0.70 and counts **false positives** (legitimate logins wrongly flagged) and **false negatives** (suspicious logins missed). This demonstrates why automatic account blocking can cause harm and why human review or challenge-based verification may be safer.
-2. The second experiment deliberately flips 45% of the **training labels** for originally benign events in the *synthetic* Group B. A group-aware classifier learns from those biased labels. We compare false-positive rates for Group A and Group B using the **unchanged, clean test labels**. This is an intentionally exaggerated teaching example, *not* a claim about fairness or discrimination in a real population.
-
-**Privacy:** No raw user identifiers, real network addresses, or private logs are used. In a real deployment, access control, data minimization, retention limits, and purpose limitation would be essential.
-
-**Explainability:** A linear model provides simpler coefficient-based explanations than an MLP, but preprocessing and correlations complicate attributions. Neither model provides a causal explanation. Alert-only rollout, calibrated thresholds, drift monitoring, fairness auditing, appeals, and analyst oversight are recommended before any real deployment.
-
-## Submission checklist
-
-- [ ] Review the personalized report, run `python report/create_report.py` if results change, and add your own insights/observations.
-- [ ] Run `python run_project.py` and `python src/smoke_test.py` successfully.
-- [ ] Check that the PDF's tables match `outputs/metrics.json` if you changed anything.
-- [ ] Create a **private** GitHub repository: `ai-cybersecurity-unit1-mini-project-<yourname>` (rename folder/repo to match your own name).
-- [ ] Push code, simulated dataset, README, report, and figures.
-- [ ] Submit the private GitHub link and `report/technical_report.pdf` to LMS, sharing repository access with the evaluator as required.
-
-Example Git commands, after creating an empty private repo on GitHub:
-
-```bash
-git init
-git add .
-git commit -m "Add Unit 1 AI cybersecurity mini project"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/ai-cybersecurity-unit1-mini-project-YOURNAME.git
-git push -u origin main
-```
-
-No GitHub repository is created and nothing is pushed automatically by this archive.
-
-## References
-
-1. Course assignment: *Lab Assignment 01 (from Unit 1), AI in Cyber Security Lab (ENSP355)*, provided by instructor, pp. 1-5.
-2. scikit-learn, [LogisticRegression documentation](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html).
-3. scikit-learn, [MLPClassifier documentation](https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html).
-4. scikit-learn, [Pipeline and data leakage](https://scikit-learn.org/stable/common_pitfalls.html#data-leakage).
-5. NIST, [AI Risk Management Framework (AI RMF 1.0)](https://www.nist.gov/itl/ai-risk-management-framework).
-
-*Dataset provenance: fully generated in this repository - no third-party dataset or external personal data used.*
+Aditya Mishra  
+AI in Cyber Security Lab (ENSP355)

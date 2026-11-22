@@ -16,7 +16,8 @@ def main():
         assert set(generated.is_suspicious.unique()) == {0, 1}
         generated.to_csv(data, index=False)
         result = run(data, base / "outputs", seed=42)
-        assert len(result["models"]) == 2
+        assert len(result["models"]) == 3
+        assert "Decision Tree" in result["models"]
         assert (base / "outputs" / "figures" / "07_biased_labels_fpr.png").exists()
         assert len(pd.read_csv(base / "outputs" / "threshold_analysis.csv")) == 3
         assert json.loads((base / "outputs" / "metrics.json").read_text())["data_description"]["total_events"] == 500
