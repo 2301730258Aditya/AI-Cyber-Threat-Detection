@@ -4,8 +4,6 @@
 
 A reproducible teaching prototype for spotting suspicious login events. It uses **fully synthetic** login activity, exploratory data analysis, Logistic Regression, a small MLP neural network, and controlled ethics experiments. This is **not** a production intrusion detection system.
 
-> **Academic note:** This is a prepared project scaffold and illustrative implementation. Review the code, rerun the analysis, explain the methodology in your own words, add your own observations, and confirm your report details before submission. This project does not contain real customer events or verified attack records.
-
 ## Quick start
 
 Use Python **3.10+**. Open a terminal in the repository root.
